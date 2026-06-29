@@ -304,42 +304,24 @@ async function sendToLine(inspector) {
   if (note) { msg += `━━━━━━━━━━━━━━━━━━\n📝 หมายเหตุ:\n${note}\n`; }
   msg += `━━━━━━━━━━━━━━━━━━`;
 
-  // ส่งผ่าน hidden form เพื่อหลีกเลี่ยง CORS
-  const payload = JSON.stringify({ message: msg, photos: photos });
-  
-  await new Promise((resolve, reject) => {
-    const iframe = document.createElement('iframe');
-    iframe.name = 'hidden_iframe_' + Date.now();
-    iframe.style.display = 'none';
-    document.body.appendChild(iframe);
+  // ส่งผ่าน Google Apps Script
+  const payload = {
+    message: msg,
+    machineId: machine.id,
+    machineName: machine.name,
+    inspector: inspector,
+    status: status,
+    passCount: pass.length,
+    failCount: fail.length,
+    failItems: fail.map(c => c.label).join(', '),
+    note: note,
+    photos: photos
+  };
 
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = PROXY_URL;
-    form.target = iframe.name;
-    form.style.display = 'none';
-
-    const input = document.createElement('input');
-    input.type = 'hidden';
-    input.name = 'data';
-    input.value = payload;
-    form.appendChild(input);
-
-    document.body.appendChild(form);
-
-    iframe.onload = () => {
-      document.body.removeChild(form);
-      document.body.removeChild(iframe);
-      resolve();
-    };
-
-    setTimeout(() => {
-      document.body.removeChild(form);
-      document.body.removeChild(iframe);
-      resolve();
-    }, 8000);
-
-    form.submit();
+  const resp = await fetch(PROXY_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    body: JSON.stringify(payload)
   });
 }
 
