@@ -120,7 +120,7 @@
 // Google Sheet ID
 const SHEET_ID = '1_Y0Xz-c1eqThJrTIJSEQzPYEOfNg9ICmhXYSTNyExk8';
 // Google Apps Script URL (สำหรับรับรูปภาพ)
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxtbrZlf6UC9W1SD12dTEuFW4h0-iCJtoQtB2ZLJxBjlC2VDhdnuNca0_t3wSIupXXapg/exec';
+const SCRIPT_URL = 'https://line-proxy.boysaknarin.workers.dev';
 
 let machine = null;
 let checks = [];
@@ -285,27 +285,14 @@ async function writeToSheet(inspector) {
   if (note) msg += `━━━━━━━━━━━━━━━━━━\n📝 หมายเหตุ:\n${note}\n`;
   msg += `━━━━━━━━━━━━━━━━━━`;
 
-  // เขียนลง Google Sheet โดยตรงผ่าน API
-  const url = `https://docs.google.com/forms/d/e/`;
-  
-  // ใช้ Apps Script URL เขียนลง Sheet
-  const scriptUrl = SCRIPT_URL + '?action=write' +
-    '&time=' + encodeURIComponent(now) +
-    '&machineId=' + encodeURIComponent(machine.id) +
-    '&machineName=' + encodeURIComponent(machine.name) +
-    '&inspector=' + encodeURIComponent(inspector) +
-    '&status=' + encodeURIComponent(status) +
-    '&pass=' + pass.length +
-    '&fail=' + fail.length +
-    '&note=' + encodeURIComponent(note) +
-    '&failItems=' + encodeURIComponent(failItems) +
-    '&msg=' + encodeURIComponent(msg);
 
-  // fetch แบบ no-cors แต่ข้อมูลอยู่ใน URL (GET) ไม่ต้องส่ง body
-  await fetch(scriptUrl, { method: 'GET', mode: 'no-cors' });
-  
-  // รอให้ Script ทำงาน
-  await new Promise(r => setTimeout(r, 1000));
+
+  const resp = await fetch(SCRIPT_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message: msg })
+  });
+  if (!resp.ok) throw new Error('HTTP ' + resp.status);
 }
 
 function showToast(msg, type = '') {
