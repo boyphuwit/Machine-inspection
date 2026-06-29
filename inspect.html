@@ -304,15 +304,14 @@ async function sendToLine(inspector) {
   if (note) { msg += `━━━━━━━━━━━━━━━━━━\n📝 หมายเหตุ:\n${note}\n`; }
   msg += `━━━━━━━━━━━━━━━━━━`;
 
-  const resp = await fetch(PROXY_URL, {
+  // ใช้ no-cors เพื่อหลีกเลี่ยง CORS preflight กับ Google Apps Script
+  await fetch(PROXY_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
     body: JSON.stringify({ message: msg, photos: photos })
   });
-
-  if (!resp.ok) throw new Error('HTTP ' + resp.status);
-  const result = await resp.json();
-  if (result.status !== 'ok') throw new Error(result.message || 'Unknown error');
+  // no-cors คืน opaque response เสมอ ถือว่าสำเร็จถ้าไม่ throw error
 }
 
 function showToast(msg, type = '') {
