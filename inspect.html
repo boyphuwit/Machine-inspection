@@ -7,27 +7,20 @@
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
-    --accent: #06C755;
-    --accent-bg: #e8f8ee;
-    --danger: #E53E3E;
-    --danger-bg: #fff5f5;
-    --gray: #718096;
-    --border: #E2E8F0;
-    --surface: #F7FAFC;
-    --text: #1A202C;
-    --text-sub: #4A5568;
-    --radius: 12px;
+    --accent: #06C755; --accent-bg: #e8f8ee; --danger: #E53E3E; --danger-bg: #fff5f5;
+    --gray: #718096; --border: #E2E8F0; --surface: #F7FAFC; --text: #1A202C;
+    --text-sub: #4A5568; --radius: 12px;
   }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--surface); color: var(--text); min-height: 100vh; padding-bottom: 32px; }
   .header { background: linear-gradient(135deg, #06C755 0%, #04a344 100%); color: #fff; padding: 20px 20px 24px; }
-  .header-tag { font-size: 11px; font-weight: 600; letter-spacing: .08em; opacity: .85; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+  .header-tag { font-size: 11px; font-weight: 600; letter-spacing: .08em; opacity: .85; margin-bottom: 6px; }
   .header h1 { font-size: 20px; font-weight: 600; margin-bottom: 2px; }
   .header .sub { font-size: 13px; opacity: .85; margin-bottom: 12px; }
   .meta-row { display: flex; gap: 8px; flex-wrap: wrap; }
   .meta-chip { background: rgba(255,255,255,.22); border-radius: 20px; padding: 4px 10px; font-size: 11px; font-weight: 500; }
   .body { padding: 20px 16px; display: flex; flex-direction: column; gap: 20px; }
   .card { background: #fff; border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; }
-  .card-title { font-size: 12px; font-weight: 600; color: var(--text-sub); letter-spacing: .04em; padding: 12px 16px 8px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 6px; }
+  .card-title { font-size: 12px; font-weight: 600; color: var(--text-sub); letter-spacing: .04em; padding: 12px 16px 8px; border-bottom: 1px solid var(--border); }
   .check-list { padding: 8px; display: flex; flex-direction: column; gap: 4px; }
   .check-item { display: flex; align-items: flex-start; gap: 12px; padding: 12px; border-radius: 8px; user-select: none; }
   .check-item.state-pass { background: var(--accent-bg); }
@@ -81,9 +74,8 @@
 
 <div class="overlay" id="overlay">
   <div class="spinner"></div>
-  <p>กำลังส่งข้อมูลไปยัง Line…</p>
+  <p>กำลังส่งข้อมูล…</p>
 </div>
-
 <div class="toast" id="toast"></div>
 
 <div class="header">
@@ -102,27 +94,22 @@
     <div class="sum-item fail"><div class="sum-num" id="sum-fail">0</div><div class="sum-label">ไม่ผ่าน</div></div>
     <div class="sum-item pending"><div class="sum-num" id="sum-pending">0</div><div class="sum-label">รอตรวจ</div></div>
   </div>
-
   <div class="card">
     <div class="card-title">✅ รายการตรวจสอบ</div>
     <div class="check-list" id="check-list"></div>
   </div>
-
   <div class="card">
     <div class="card-title">👤 ผู้ตรวจสอบ</div>
     <input type="text" id="inspector" placeholder="ชื่อ-นามสกุล ผู้ตรวจ" autocomplete="name">
   </div>
-
   <div class="card">
     <div class="card-title">📝 หมายเหตุ / สิ่งที่พบ</div>
     <textarea id="note" placeholder="ระบุสิ่งที่พบ, ค่าที่อ่านได้, หรือสิ่งผิดปกติ…"></textarea>
   </div>
-
   <div class="card">
     <div class="card-title">📷 รูปถ่าย (ไม่เกิน 3 รูป)</div>
     <div class="photo-grid" id="photo-grid"></div>
   </div>
-
   <button class="submit-btn" id="submit-btn" onclick="submitInspection()">
     💬 ส่งผลการตรวจและแจ้ง Line
   </button>
@@ -130,8 +117,10 @@
 
 <script src="js/config.js"></script>
 <script>
-// ── ใส่ Google Apps Script URL ที่นี่ ──
-const PROXY_URL = 'https://script.google.com/macros/s/AKfycbz6teXWoyC_aQyqcVao3NLCFvTtOZKHGSWThAsmNnCAD5_tElmlsNDmPmiJ4x2Iaxcy/exec';
+// Google Sheet ID
+const SHEET_ID = '1_Y0Xz-c1eqThJrTIJSEQzPYEOfNg9ICmhXYSTNyExk8';
+// Google Apps Script URL (สำหรับรับรูปภาพ)
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz6teXWoyC_aQyqcVao3NLCFvTtOZKHGSWThAsmNnCAD5_tElmlsNDmPmiJ4x2Iaxcy/exec';
 
 let machine = null;
 let checks = [];
@@ -144,27 +133,22 @@ function init() {
   document.getElementById('hdr-time').textContent = now.toLocaleString('th-TH', {
     day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
   });
-
   machine = MACHINES.find(m => m.id === id);
   if (!machine) {
     document.getElementById('hdr-name').textContent = 'ไม่พบ ID: ' + id;
-    document.getElementById('hdr-location').textContent = 'กรุณาสแกน QR Code ที่ถูกต้อง';
     return;
   }
-
   document.getElementById('hdr-id').textContent = machine.id;
   document.getElementById('hdr-name').textContent = machine.name;
   document.getElementById('hdr-location').textContent = machine.location || '';
   document.getElementById('hdr-loc-chip').textContent = machine.zone || machine.location || '—';
   document.title = 'ตรวจสอบ: ' + machine.name;
-
   checks = machine.checks.map((c, i) => ({
     id: i,
     label: typeof c === 'string' ? c : c.label,
     desc: typeof c === 'object' ? c.desc || '' : '',
     state: 'pending'
   }));
-
   renderChecklist();
   renderPhotos();
   updateSummary();
@@ -178,13 +162,13 @@ function renderChecklist() {
     div.className = 'check-item' + (c.state !== 'pending' ? ' state-' + c.state : '');
     div.innerHTML = `
       <div class="toggle-wrap">
-        <button class="toggle-btn pass-btn${c.state === 'pass' ? ' active' : ''}" onclick="setCheck(${c.id},'pass')">✓</button>
-        <button class="toggle-btn fail-btn${c.state === 'fail' ? ' active' : ''}" onclick="setCheck(${c.id},'fail')">✗</button>
+        <button class="toggle-btn pass-btn${c.state==='pass'?' active':''}" onclick="setCheck(${c.id},'pass')">✓</button>
+        <button class="toggle-btn fail-btn${c.state==='fail'?' active':''}" onclick="setCheck(${c.id},'fail')">✗</button>
       </div>
       <div class="check-text">
         <div class="check-label">${c.label}</div>
-        ${c.desc ? `<div class="check-desc">${c.desc}</div>` : ''}
-        ${c.state !== 'pending' ? `<span class="item-status ${c.state}">${c.state === 'pass' ? '✓ ผ่าน' : '✗ ไม่ผ่าน'}</span>` : ''}
+        ${c.desc?`<div class="check-desc">${c.desc}</div>`:''}
+        ${c.state!=='pending'?`<span class="item-status ${c.state}">${c.state==='pass'?'✓ ผ่าน':'✗ ไม่ผ่าน'}</span>`:''}
       </div>`;
     list.appendChild(div);
   });
@@ -205,8 +189,7 @@ function updateSummary() {
   document.getElementById('sum-pass').textContent = pass;
   document.getElementById('sum-fail').textContent = fail;
   document.getElementById('sum-pending').textContent = pending;
-  const btn = document.getElementById('submit-btn');
-  btn.className = fail > 0 ? 'submit-btn danger' : 'submit-btn';
+  document.getElementById('submit-btn').className = fail > 0 ? 'submit-btn danger' : 'submit-btn';
 }
 
 function renderPhotos() {
@@ -256,35 +239,33 @@ function removePhoto(idx) {
 async function submitInspection() {
   if (!machine) return;
   const inspector = document.getElementById('inspector').value.trim();
-  if (!inspector) {
-    showToast('กรุณาระบุชื่อผู้ตรวจสอบ', 'error');
-    return;
-  }
+  if (!inspector) { showToast('กรุณาระบุชื่อผู้ตรวจสอบ', 'error'); return; }
   const pending = checks.filter(c => c.state === 'pending').length;
-  if (pending > 0 && !confirm(`ยังมี ${pending} รายการที่ยังไม่ได้ตรวจ\nต้องการส่งผลแบบไม่ครบถ้วนหรือไม่?`)) return;
+  if (pending > 0 && !confirm(`ยังมี ${pending} รายการที่ยังไม่ได้ตรวจ\nต้องการส่งผลหรือไม่?`)) return;
 
   document.getElementById('overlay').classList.add('show');
   try {
-    await sendToLine(inspector);
+    await writeToSheet(inspector);
     document.getElementById('overlay').classList.remove('show');
     showToast('✅ ส่งผลการตรวจเรียบร้อยแล้ว', 'success');
     const btn = document.getElementById('submit-btn');
     btn.disabled = true;
     btn.textContent = '✅ ส่งแล้ว';
-  } catch (err) {
+  } catch(err) {
     document.getElementById('overlay').classList.remove('show');
     showToast('❌ ส่งไม่สำเร็จ: ' + err.message, 'error');
     console.error(err);
   }
 }
 
-async function sendToLine(inspector) {
+async function writeToSheet(inspector) {
   const now = new Date().toLocaleString('th-TH');
   const pass = checks.filter(c => c.state === 'pass');
   const fail = checks.filter(c => c.state === 'fail');
   const pending = checks.filter(c => c.state === 'pending');
   const note = document.getElementById('note').value.trim();
   const status = fail.length > 0 ? '⚠️ พบปัญหา' : pending.length > 0 ? '📋 ตรวจไม่ครบ' : '✅ ปกติ';
+  const failItems = fail.map(c => c.label).join(', ');
 
   let msg = `\n🔧 ผลการตรวจสอบเครื่องจักร\n`;
   msg += `━━━━━━━━━━━━━━━━━━\n`;
@@ -301,28 +282,30 @@ async function sendToLine(inspector) {
     fail.forEach(c => { msg += `  • ${c.label}\n`; });
   }
   if (pending.length > 0) msg += `⬜ ยังไม่ตรวจ ${pending.length} รายการ\n`;
-  if (note) { msg += `━━━━━━━━━━━━━━━━━━\n📝 หมายเหตุ:\n${note}\n`; }
+  if (note) msg += `━━━━━━━━━━━━━━━━━━\n📝 หมายเหตุ:\n${note}\n`;
   msg += `━━━━━━━━━━━━━━━━━━`;
 
-  // ส่งผ่าน Google Apps Script
-  const payload = {
-    message: msg,
-    machineId: machine.id,
-    machineName: machine.name,
-    inspector: inspector,
-    status: status,
-    passCount: pass.length,
-    failCount: fail.length,
-    failItems: fail.map(c => c.label).join(', '),
-    note: note,
-    photos: photos
-  };
+  // เขียนลง Google Sheet โดยตรงผ่าน API
+  const url = `https://docs.google.com/forms/d/e/`;
+  
+  // ใช้ Apps Script URL เขียนลง Sheet
+  const scriptUrl = SCRIPT_URL + '?action=write' +
+    '&time=' + encodeURIComponent(now) +
+    '&machineId=' + encodeURIComponent(machine.id) +
+    '&machineName=' + encodeURIComponent(machine.name) +
+    '&inspector=' + encodeURIComponent(inspector) +
+    '&status=' + encodeURIComponent(status) +
+    '&pass=' + pass.length +
+    '&fail=' + fail.length +
+    '&note=' + encodeURIComponent(note) +
+    '&failItems=' + encodeURIComponent(failItems) +
+    '&msg=' + encodeURIComponent(msg);
 
-  const resp = await fetch(PROXY_URL, {
-    method: 'POST',
-    mode: 'no-cors',
-    body: JSON.stringify(payload)
-  });
+  // fetch แบบ no-cors แต่ข้อมูลอยู่ใน URL (GET) ไม่ต้องส่ง body
+  await fetch(scriptUrl, { method: 'GET', mode: 'no-cors' });
+  
+  // รอให้ Script ทำงาน
+  await new Promise(r => setTimeout(r, 1000));
 }
 
 function showToast(msg, type = '') {
